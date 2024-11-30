@@ -1,0 +1,155 @@
+{% extends 'dashboard/master.html' %}
+
+{% block content %}
+    <div id="app">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Category Page</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Category Page</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Category List</h3>
+                                <button type="button" class="btn btn-success float-right" data-toggle="modal"
+                                        data-target="#createCategoryModal">
+                                    Create Category
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>Category ID</th>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="category in category_list" :key="category.id">
+                                            <td>[[ category.id ]]</td>
+                                            <td>[[ category.name ]]</td>
+                                            <td>[[ category.description ]]</td>
+                                            <td>
+                                                <button @click="openEditModal(category)" class="btn btn-warning btn-sm mr-1">
+                                                    Edit
+                                                </button>
+                                                <button @click="deleteCategory(category.id)"
+                                                        class="btn btn-danger btn-sm">Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include 'dashboard/category/create_category_modal.html' %}
+        {% include 'dashboard/category/edit_category_modal.html' %}
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    const { createApp } = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                category_list: [],
+                newCategory: {
+                    name: '',
+                    description: '',
+                },
+                editCategory: {
+                    id: null,
+                    name: '',
+                    description: '',
+                },
+            };
+        },
+        created() {
+            this.getCategoryList();
+        },
+        methods: {
+            getCategoryList() {
+                axios.get('/dashboard/categories/list')
+                    .then(response => {
+                        console.log(response.data);
+                        this.category_list = response.data;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            },
+            createCategory() {
+                axios.post('/dashboard/categories/', this.newCategory)
+                    .then(response => {
+                        console.log(response.data.message);
+                        $('#createCategoryModal').modal('hide');
+                        this.getCategoryList();
+                        this.resetNewCategory();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+            openEditModal(category) {
+                this.editCategory = { ...category }; // Clone the category object
+                $('#editCategoryModal').modal('show');
+            },
+            updateCategory() {
+                axios.put(`/dashboard/categories/${this.editCategory.id}`, this.editCategory)
+                    .then(response => {
+                        console.log(response.data.message);
+                        $('#editCategoryModal').modal('hide');
+                        this.getCategoryList();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert('Error updating category: ' + error.response.data.message);
+                    });
+            },
+            deleteCategory(categoryId) {
+                if (confirm("Are you sure you want to delete this category?")) {
+                    axios.delete(`/dashboard/categories/${categoryId}`)
+                        .then(response => {
+                            console.log(response.data.message);
+                            this.getCategoryList();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                }
+            },
+            resetNewCategory() {
+                this.newCategory = {
+                    name: '',
+                    description: '',
+                };
+            }
+        }
+    }).mount('#app');
+</script>
+{% endblock %}

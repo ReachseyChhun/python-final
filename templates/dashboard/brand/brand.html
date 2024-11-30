@@ -1,0 +1,155 @@
+{% extends 'dashboard/master.html' %}
+
+{% block content %}
+    <div id="app">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Brand Page</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Brand Page</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Brand List</h3>
+                                <button type="button" class="btn btn-success float-right" data-toggle="modal"
+                                        data-target="#createBrandModal">
+                                    Create Brand
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>Brand ID</th>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="brand in brand_list" :key="brand.id">
+                                            <td>[[ brand.id ]]</td>
+                                            <td>[[ brand.name ]]</td>
+                                            <td>[[ brand.description ]]</td>
+                                            <td>
+                                                <button @click="openEditModal(brand)" class="btn btn-warning btn-sm mr-1">
+                                                    Edit
+                                                </button>
+                                                <button @click="deleteBrand(brand.id)" class="btn btn-danger btn-sm">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include 'dashboard/brand/create_brand_modal.html' %}
+        {% include 'dashboard/brand/edit_brand_modal.html' %}
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    const {createApp} = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                brand_list: [],
+                newBrand: {
+                    name: '',
+                    description: ''
+                },
+                editBrand: {
+                    id: null,
+                    name: '',
+                    description: ''
+                }
+            };
+        },
+        created() {
+            this.getBrandList();
+        },
+        methods: {
+            getBrandList() {
+                axios.get('/dashboard/brands/list')
+                    .then(response => {
+                        console.log(response.data);
+                        this.brand_list = response.data;
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            },
+            createBrand() {
+                axios.post('/dashboard/brands/', this.newBrand)
+                    .then(response => {
+                        console.log(response.data.message);
+                        $('#createBrandModal').modal('hide');
+                        this.getBrandList();
+                        this.resetNewBrand();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+            openEditModal(brand) {
+                this.editBrand = { ...brand }; // Clone the brand object
+                $('#editBrandModal').modal('show');
+            },
+            updateBrand() {
+                axios.put(`/dashboard/brands/${this.editBrand.id}`, this.editBrand)
+                    .then(response => {
+                        console.log(response.data.message);
+                        $('#editBrandModal').modal('hide');
+                        this.getBrandList();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert('Error updating brand: ' + error.response.data.message);
+                    });
+            },
+            deleteBrand(brandId) {
+                if (confirm("Are you sure you want to delete this brand?")) {
+                    axios.delete(`/dashboard/brands/${brandId}`)
+                        .then(response => {
+                            console.log(response.data.message);
+                            this.getBrandList();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                }
+            },
+            resetNewBrand() {
+                this.newBrand = {
+                    name: '',
+                    description: ''
+                };
+            }
+        }
+    }).mount('#app');
+</script>
+{% endblock %}

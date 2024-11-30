@@ -1,0 +1,53 @@
+<div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="updateProduct">
+                    <div class="form-group">
+                        <label for="editProductName">Name</label>
+                        <input type="text" v-model="editProduct.name" class="form-control" id="editProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductCost">Cost</label>
+                        <input type="text" v-model="editProduct.cost" class="form-control" id="editProductCost" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductPrice">Price</label>
+                        <input type="text" v-model="editProduct.price" class="form-control" id="editProductPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductCategory">Category</label>
+                        <select v-model="editProduct.category_id" class="form-control" id="editProductCategory">
+                            <option v-for="category in categories" :key="category.id" :value="category.id">[[ category.name ]]</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductUnit">Unit</label>
+                        <select v-model="editProduct.unit_id" class="form-control" id="editProductUnit">
+                            <option v-for="unit in units" :key="unit.id" :value="unit.id">[[ unit.name ]]</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductBrand">Brand</label>
+                        <select v-model="editProduct.brand_id" class="form-control" id="editProductBrand">
+                            <option v-for="brand in brands" :key="brand.id" :value="brand.id">[[ brand.name ]]</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductTag">Tag</label>
+                        <select v-model="editProduct.tag_id" class="form-control" id="editProductTag">
+                            <option v-for="tag in tags" :key="tag.id" :value="tag.id">[[ tag.name ]]</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

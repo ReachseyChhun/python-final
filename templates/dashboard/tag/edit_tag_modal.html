@@ -1,0 +1,26 @@
+<div class="modal fade" id="editTagModal" tabindex="-1" role="dialog" aria-labelledby="editTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTagModalLabel">Edit Tag</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editTagName">Tag Name</label>
+                    <input type="text" class="form-control" id="editTagName" v-model="editTag.name" placeholder="Enter tag name">
+                </div>
+                <div class="form-group">
+                    <label for="editTagDescription">Description</label>
+                    <textarea class="form-control" id="editTagDescription" v-model="editTag.description" placeholder="Enter tag description"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" @click="updateTag">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>

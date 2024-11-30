@@ -1,0 +1,206 @@
+{% extends 'dashboard/master.html' %}
+
+{% block content %}
+    <div id="app">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Product Page</h1>
+                    </div><!-- /.col -->
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Product Page</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Product List</h3>
+                                <button type="button" class="btn btn-success float-right" data-toggle="modal"
+                                        data-target="#createProductModal">
+                                    Create Product
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>Product ID</th>
+                                            <th>Name</th>
+                                            <th>Cost</th>
+                                            <th>Price</th>
+                                            <th>Category</th>
+                                            <th>Unit</th>
+                                            <th>Brand</th>
+                                            <th>Tag</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="product in product_list" :key="product.id">
+                                            <td>[[ product.id ]]</td> <!-- Display the ID -->
+                                            <td>[[ product.name ]]</td>
+                                            <td>$ [[ product.cost ]]</td>
+                                            <td>$ [[ product.price ]]</td>
+                                            <td>[[ product.category_name ]]</td>
+                                            <td>[[ product.unit_name ]]</td>
+                                            <td>[[ product.brand_name ]]</td>
+                                            <td>[[ product.tag_name ]]</td>
+                                            <td>
+                                                <button @click="openEditModal(product)"
+                                                        class="btn btn-warning btn-sm mr-1">
+                                                    Edit
+                                                </button>
+                                                <button @click="deleteProduct(product.id)"
+                                                        class="btn btn-danger btn-sm">Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include 'dashboard/product/create_product_modal.html' %}
+        {% include 'dashboard/product/edit_product_modal.html' %}
+
+
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+        const {createApp} = Vue;
+        createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    product_list: [],
+                    newProduct: {
+                        name: '',
+                        cost: '',
+                        price: '',
+                        category_id: null,
+                        unit_id: null,
+                        brand_id: null,
+                        tag_id: null,
+                    },
+                    editProduct: {
+                        id: null,
+                        name: '',
+                        cost: '',
+                        price: '',
+                        category_id: null,
+                        unit_id: null,
+                        brand_id: null,
+                        tag_id: null,
+                    },
+                    categories: [],
+                    units: [],
+                    brands: [],
+                    tags: [],
+                };
+            },
+            created() {
+                this.getProductList();
+                this.getDropdownData();
+            },
+            methods: {
+                getProductList() {
+                    axios.get('/dashboard/products/list')
+                        .then(response => {
+                            console.log(response.data);
+                            this.product_list = response.data;
+                        })
+                        .catch(error => {
+                            console.log(error);
+                        });
+                },
+                getDropdownData() {
+                    axios.get('/dashboard/products/getDropdownData')
+                        .then(response => {
+                            this.categories = response.data.categories;
+                            this.units = response.data.units;
+                            this.brands = response.data.brands;
+                            this.tags = response.data.tags;
+
+                            // Set default pre-selected values for create modal
+                            if (this.categories.length > 0) this.newProduct.category_id = this.categories[0].id;
+                            if (this.units.length > 0) this.newProduct.unit_id = this.units[0].id;
+                            if (this.brands.length > 0) this.newProduct.brand_id = this.brands[0].id;
+                            if (this.tags.length > 0) this.newProduct.tag_id = this.tags[0].id;
+                        })
+                        .catch(error => {
+                            console.log(error);
+                        });
+                },
+                createProduct() {
+                    axios.post('/dashboard/products/', this.newProduct)
+                        .then(response => {
+                            console.log(response.data.message);
+                            $('#createProductModal').modal('hide');
+                            this.getProductList();
+                            this.resetNewProduct();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                },
+                openEditModal(product) {
+                    this.editProduct = {...product}; // Clone the product object
+                    $('#editProductModal').modal('show');
+                },
+                updateProduct() {
+                    axios.put(`/dashboard/products/${this.editProduct.id}`, this.editProduct)
+                        .then(response => {
+                            console.log(response.data.message);
+                            $('#editProductModal').modal('hide');
+                            this.getProductList();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            alert('Error updating product: ' + error.response.data.message);
+                        });
+                },
+                deleteProduct(productId) {
+                    if (confirm("Are you sure you want to delete this product?")) {
+                        axios.delete(`/dashboard/products/${productId}`)
+                            .then(response => {
+                                console.log(response.data.message);
+                                this.getProductList();
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    }
+                },
+                resetNewProduct() {
+                    this.newProduct = {
+                        name: '',
+                        cost: '',
+                        price: '',
+                        category_id: this.categories.length > 0 ? this.categories[0].id : null,
+                        unit_id: this.units.length > 0 ? this.units[0].id : null,
+                        brand_id: this.brands.length > 0 ? this.brands[0].id : null,
+                        tag_id: this.tags.length > 0 ? this.tags[0].id : null,
+                    };
+                }
+            }
+        }).mount('#app');
+    </script>
+{% endblock %}
