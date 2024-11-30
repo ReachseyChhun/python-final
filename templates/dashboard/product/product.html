@@ -36,6 +36,7 @@
                                         <thead>
                                         <tr>
                                             <th>Product ID</th>
+                                            <th>Image</th>
                                             <th>Name</th>
                                             <th>Cost</th>
                                             <th>Price</th>
@@ -48,7 +49,11 @@
                                         </thead>
                                         <tbody>
                                         <tr v-for="product in product_list" :key="product.id">
-                                            <td>[[ product.id ]]</td> <!-- Display the ID -->
+                                            <td>[[ product.id ]]</td>
+                                            <td>
+                                                <img v-if="product.image" :src="'/' + product.image" alt="Product Image"
+                                                     style="max-width: 100px;">
+                                            </td>
                                             <td>[[ product.name ]]</td>
                                             <td>$ [[ product.cost ]]</td>
                                             <td>$ [[ product.price ]]</td>
@@ -78,8 +83,6 @@
 
         {% include 'dashboard/product/create_product_modal.html' %}
         {% include 'dashboard/product/edit_product_modal.html' %}
-
-
     </div>
 {% endblock %}
 
@@ -95,20 +98,24 @@
                         name: '',
                         cost: '',
                         price: '',
+                        description: '',
                         category_id: null,
                         unit_id: null,
                         brand_id: null,
                         tag_id: null,
+                        image: null,  // Add image for product creation
                     },
                     editProduct: {
                         id: null,
                         name: '',
                         cost: '',
                         price: '',
+                        description: '',
                         category_id: null,
                         unit_id: null,
                         brand_id: null,
                         tag_id: null,
+                        image: null,  // Add image for product editing
                     },
                     categories: [],
                     units: [],
@@ -149,8 +156,25 @@
                             console.log(error);
                         });
                 },
+                // Handle file change for image upload
+                onFileChange(event, type) {
+                    const file = event.target.files[0];
+                    if (type === 'new') {
+                        this.newProduct.image = file;
+                    } else {
+                        this.editProduct.image = file;
+                    }
+                },
                 createProduct() {
-                    axios.post('/dashboard/products/', this.newProduct)
+                    const formData = new FormData();
+                    for (const key in this.newProduct) {
+                        formData.append(key, this.newProduct[key]);
+                    }
+                    axios.post('/dashboard/products/', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    })
                         .then(response => {
                             console.log(response.data.message);
                             $('#createProductModal').modal('hide');
@@ -166,7 +190,15 @@
                     $('#editProductModal').modal('show');
                 },
                 updateProduct() {
-                    axios.put(`/dashboard/products/${this.editProduct.id}`, this.editProduct)
+                    const formData = new FormData();
+                    for (const key in this.editProduct) {
+                        formData.append(key, this.editProduct[key]);
+                    }
+                    axios.put(`/dashboard/products/${this.editProduct.id}`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    })
                         .then(response => {
                             console.log(response.data.message);
                             $('#editProductModal').modal('hide');
@@ -194,6 +226,8 @@
                         name: '',
                         cost: '',
                         price: '',
+                        description: '',
+                        image: '',
                         category_id: this.categories.length > 0 ? this.categories[0].id : null,
                         unit_id: this.units.length > 0 ? this.units[0].id : null,
                         brand_id: this.brands.length > 0 ? this.brands[0].id : null,

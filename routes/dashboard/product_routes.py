@@ -1,5 +1,14 @@
 from flask import Blueprint, request, jsonify, render_template
 from models import db, Product, Category, Brand, Tag, Unit
+import os
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = 'static/uploads'  # Set upload folder
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 product_bp = Blueprint('product', __name__, url_prefix='/dashboard/products')
 
@@ -11,16 +20,25 @@ def product():
 # Create a new product
 @product_bp.route('/', methods=['POST'])
 def create_product():
-    data = request.json
     try:
+        data = request.form
+        image_path = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                image_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(image_path)
         product = Product(
             name=data['name'],
             cost=data['cost'],
             price=data['price'],
+            description=data['description'],
             category_id=data['category_id'],
             unit_id=data['unit_id'],
             brand_id=data['brand_id'],
-            tag_id=data['tag_id']
+            tag_id=data['tag_id'],
+            image=image_path
         )
         db.session.add(product)
         db.session.commit()
@@ -29,7 +47,7 @@ def create_product():
         return jsonify({"error": str(e)}), 400
 
 # Get all products
-@product_bp.route('list', methods=['GET'])
+@product_bp.route('/list', methods=['GET'])
 def get_products():
     # Query the products and include related categories, units, brands, and tags
     products = Product.query.all()
@@ -41,10 +59,12 @@ def get_products():
             "name": product.name,
             "cost": str(product.cost),
             "price": str(product.price),
+            "description": product.description,
             "category_name": product.category.name if product.category else None,
             "unit_name": product.unit.name if product.unit else None,
             "brand_name": product.brand.name if product.brand else None,
-            "tag_name": product.tag.name if product.tag else None
+            "tag_name": product.tag.name if product.tag else None,
+            "image": product.image
         }
         for product in products
     ]
@@ -62,29 +82,38 @@ def get_product(id):
         "name": product.name,
         "cost": str(product.cost),
         "price": str(product.price),
+        "description": product.description,
         "category_id": product.category_id,
         "unit_id": product.unit_id,
         "brand_id": product.brand_id,
-        "tag_id": product.tag_id
+        "tag_id": product.tag_id,
+        "image": product.image
     }), 200
 
 # Update a product
 @product_bp.route('/<int:id>', methods=['PUT'])
 def update_product(id):
-    data = request.json
-    product = Product.query.get(id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-
     try:
+        product = Product.query.get(id)
+        if not product:
+            return jsonify({"message": "Product not found"}), 404
+        data = request.form
         product.name = data.get('name', product.name)
         product.cost = data.get('cost', product.cost)
         product.price = data.get('price', product.price)
+        product.description = data.get('description', product.description),
         product.category_id = data.get('category_id', product.category_id)
         product.unit_id = data.get('unit_id', product.unit_id)
         product.brand_id = data.get('brand_id', product.brand_id)
         product.tag_id = data.get('tag_id', product.tag_id)
 
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                image_path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(image_path)
+                product.image = image_path
         db.session.commit()
         return jsonify({"message": "Product updated successfully"}), 200
     except Exception as e:
