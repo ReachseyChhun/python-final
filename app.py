@@ -42,6 +42,7 @@ def product_detail(product_id):
 def checkout(product_id):
     response = requests.get(f'http://localhost:5000/dashboard/products/{product_id}')
     product = response.json()
+    print(product)
     if request.method == 'POST':
         name = request.form['name']
         phone_number = request.form['phone_number']
@@ -61,7 +62,7 @@ def checkout(product_id):
 
         return redirect(url_for('index'))
 
-    return render_template('index.html', product=product)
+    return render_template('checkout.html', product=product)
 
 
 if __name__ == '__main__':

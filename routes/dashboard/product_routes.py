@@ -83,10 +83,10 @@ def get_product(id):
         "cost": str(product.cost),
         "price": str(product.price),
         "description": product.description,
-        "category_id": product.category_id,
-        "unit_id": product.unit_id,
-        "brand_id": product.brand_id,
-        "tag_id": product.tag_id,
+        "category_name": product.category.name if product.category else None,
+        "unit_name": product.unit.name if product.unit else None,
+        "brand_name": product.brand.name if product.brand else None,
+        "tag_name": product.tag.name if product.tag else None,
         "image": product.image
     }), 200
 
